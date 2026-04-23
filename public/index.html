@@ -288,8 +288,8 @@
     }
 
     .options {
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
       gap: 8px;
     }
 
@@ -307,7 +307,8 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-width: 52px;
+      width: 100%;
+      min-width: 0;
       padding: 10px 12px;
       border-radius: 12px;
       background: #fff;
@@ -316,6 +317,7 @@
       cursor: pointer;
       font-weight: 700;
       font-size: 0.95rem;
+      text-align: center;
     }
 
     .option input:checked + label {
@@ -477,7 +479,8 @@
       .container { width: min(100% - 20px, 1150px); }
       .hero, .section-card { padding: 18px; }
       h1 { font-size: 1.65rem; }
-      .option label { min-width: 48px; padding: 10px; }
+      .options { grid-template-columns: 1fr; }
+      .option label { padding: 10px; }
       .question-header { align-items: flex-start; }
       .q-help { margin-left: 0; }
       .textarea-meta { flex-direction: column; }
@@ -532,7 +535,7 @@
     <section class="hero">
       <h1>Formulário de Orientação Vocacional com Entrevista</h1>
       <p>Este formulário cruza <strong>interesses</strong>, <strong>competências percebidas</strong>, <strong>personalidade</strong>, <strong>macroáreas de afinidade</strong>, <strong>valores de carreira</strong>, <strong>maturidade da escolha</strong> e um <strong>bloco de entrevista aberta</strong>.</p>
-      <p class="section-desc">A parte fechada organiza o perfil. A parte aberta aprofunda o raciocínio, como em uma entrevista profissional séria. É isso que evita resultado raso.</p>
+      <p class="section-desc"></p>
 
       <div class="meta-grid">
         <div class="input-group">
@@ -545,30 +548,10 @@
         </div>
       </div>
 
-      <div class="backend-card">
-        <h3>Integração com backend e PDF</h3>
-        <p class="section-desc">Se este HTML estiver sendo servido pelo mesmo backend Node, deixe o campo abaixo em branco. Nesse caso, ele usa automaticamente a mesma origem do site.</p>
-        <div class="meta-grid">
-          <div class="input-group">
-            <label for="backendUrl">URL do backend (opcional)</label>
-            <input id="backendUrl" type="text" placeholder="Ex.: http://localhost:3000" />
-          </div>
-        </div>
-        <p class="helper">Fluxo: o navegador calcula os escores, envia tudo em JSON ao servidor e o servidor devolve a análise estruturada e o PDF.</p>
-        <div id="serverStatus" class="status-box">Backend ainda não acionado.</div>
-      </div>
+    
 
       <div class="scale-box">
-        <strong>Escala de resposta:</strong> 0 = nada a ver comigo · 1 = pouco a ver comigo · 2 = razoavelmente a ver comigo · 3 = bastante a ver comigo · 4 = muito a ver comigo
-      </div>
-
-      <div class="interview-box">
-        <strong>Entrevista aberta:</strong> no final há 12 perguntas fundamentais. Elas foram pensadas para captar história de escolha, critérios reais, medos, influências externas, ambientes desejados e condições concretas de decisão.
-      </div>
-
-      <div class="top-actions">
-        <button class="btn-primary" id="btnIniciar">Ir para o formulário</button>
-        <button class="btn-secondary" id="btnCarregar">Carregar respostas salvas</button>
+        <strong>Escala de resposta:</strong> Nada a ver comigo · Pouco a ver comigo· Razoavelmente a ver comigo · Bastante a ver comigo · Muito a ver comigo
       </div>
     </section>
 
@@ -587,12 +570,11 @@
     <main id="formSections"></main>
 
     <div class="footer-actions">
-      <button class="btn-secondary" id="btnSalvar">Salvar respostas</button>
-      <button class="btn-ghost" id="btnLimpar">Limpar tudo</button>
-      <button class="btn-primary" id="btnCalcular">Calcular resultados</button>
-      <button class="btn-ghost" id="btnGerarPdfServidorTopo">Gerar PDF no servidor</button>
+      <button class="btn-primary" id="btnGerarAnaliseIa">Gerar análise vocacional</button>
+      <button class="btn-ghost" id="btnGerarPdfIa">Baixar PDF</button>
     </div>
 
+   
     <section class="results card hidden" id="resultsSection">
       <div class="section-card">
         <h2>Resultado padronizado</h2>
@@ -680,7 +662,7 @@
               <span id="condicoesExp"></span>
             </div>
           </div>
-          <p class="helper">Essa leitura não “adivinha” profissão. Ela organiza o conteúdo da entrevista para enriquecer a interpretação.</p>
+          <p class="helper">Essa leitura organiza o conteúdo da entrevista para enriquecer a interpretação para escolha da profissão com auxílio de um profissional competente.</p>
         </div>
 
         <div class="result-block" style="margin-top:16px;">
@@ -691,21 +673,12 @@
         <div class="result-block" style="margin-top:16px;">
           <h3>Texto pronto para uso interno</h3>
           <textarea id="textoResultado" class="text-output" readonly></textarea>
-          <div class="result-actions">
-            <button class="btn-primary" id="btnCopiar">Copiar texto</button>
-            <button class="btn-secondary" id="btnBaixarJson">Baixar JSON</button>
-            <button class="btn-ghost" id="btnGerarAnaliseIa">Gerar análise no servidor</button>
-            <button class="btn-primary" id="btnGerarPdfIa">Baixar PDF do servidor</button>
-          </div>
           <p class="warn">Use este resultado como apoio à orientação vocacional. Ele não substitui avaliação psicológica completa.</p>
         </div>
 
         <div class="result-block hidden" style="margin-top:16px;" id="aiAnalysisBlock">
           <h3>Análise retornada pelo backend / IA</h3>
           <textarea id="textoAnaliseIa" class="text-output" readonly></textarea>
-          <div class="result-actions">
-            <button class="btn-secondary" id="btnCopiarIa">Copiar análise IA</button>
-          </div>
           <p class="helper">Esta é a devolutiva estruturada retornada pela rota <code>/api/analise-vocacional</code>.</p>
         </div>
       </div>
@@ -713,8 +686,8 @@
   </div>
 
   <script>
-    const DATA = {"sections": [{"id": "A", "title": "Bloco A — Interesses", "description": "Aqui a ideia é identificar aquilo que desperta curiosidade, prazer e vontade de fazer.", "questions": [{"id": 1, "text": "Gosto de atividades concretas, em que eu possa fazer, montar, ajustar ou consertar algo."}, {"id": 2, "text": "Tenho interesse por ferramentas, equipamentos, máquinas ou tecnologia aplicada."}, {"id": 3, "text": "Prefiro atividades práticas a atividades excessivamente teóricas."}, {"id": 4, "text": "Gosto de pesquisar, analisar e entender como as coisas funcionam."}, {"id": 5, "text": "Sinto prazer em resolver problemas complexos com lógica e raciocínio."}, {"id": 6, "text": "Tenho interesse por ciência, investigação, dados ou descoberta."}, {"id": 7, "text": "Gosto de criar, imaginar e expressar ideias de forma original."}, {"id": 8, "text": "Tenho interesse por arte, design, escrita, imagem, música ou produção criativa."}, {"id": 9, "text": "Sinto prazer em atividades em que posso inventar algo novo."}, {"id": 10, "text": "Gosto de ajudar pessoas, orientar, acolher ou ensinar."}, {"id": 11, "text": "Tenho interesse por atividades voltadas ao cuidado, educação ou apoio humano."}, {"id": 12, "text": "Sinto satisfação quando percebo que meu trabalho melhora a vida de alguém."}, {"id": 13, "text": "Gosto de liderar, influenciar, negociar ou mobilizar pessoas."}, {"id": 14, "text": "Tenho interesse por metas, resultados, crescimento e tomada de decisão."}, {"id": 15, "text": "Sinto prazer em desafios, competição saudável e ambientes dinâmicos."}, {"id": 16, "text": "Gosto de organizar tarefas, informações, rotinas e processos."}, {"id": 17, "text": "Tenho interesse por atividades com método, estrutura e acompanhamento de detalhes."}, {"id": 18, "text": "Prefiro ambientes previsíveis, bem definidos e organizados."}]}, {"id": "B", "title": "Bloco B — Competências percebidas", "description": "Aqui não é o que você gostaria de ser. É o que você percebe que já consegue fazer relativamente bem.", "questions": [{"id": 19, "text": "Aprendo com facilidade tarefas técnicas e operacionais."}, {"id": 20, "text": "Consigo lidar bem com objetos, ferramentas, equipamentos ou recursos tecnológicos."}, {"id": 21, "text": "Tenho facilidade para resolver problemas práticos do dia a dia."}, {"id": 22, "text": "Consigo analisar informações com profundidade antes de concluir algo."}, {"id": 23, "text": "Tenho facilidade para estudar sozinho e organizar meu raciocínio."}, {"id": 24, "text": "Costumo me sair bem em tarefas que exigem lógica, análise e interpretação."}, {"id": 25, "text": "Tenho facilidade para criar ideias originais ou soluções fora do óbvio."}, {"id": 26, "text": "Consigo me expressar bem por imagem, escrita, fala, estética ou composição."}, {"id": 27, "text": "Percebo detalhes de estilo, forma, linguagem ou sensibilidade que outras pessoas às vezes não notam."}, {"id": 28, "text": "As pessoas costumam me procurar para conversar, pedir ajuda ou orientação."}, {"id": 29, "text": "Tenho facilidade para explicar algo de forma clara e compreensível."}, {"id": 30, "text": "Costumo lidar bem com grupos, relações interpessoais e mediação de conflitos."}, {"id": 31, "text": "Consigo defender minhas ideias com segurança."}, {"id": 32, "text": "Tenho facilidade para tomar iniciativa e fazer as coisas acontecerem."}, {"id": 33, "text": "Consigo mobilizar pessoas em torno de metas, decisões ou projetos."}, {"id": 34, "text": "Tenho facilidade para manter organização mesmo com várias demandas."}, {"id": 35, "text": "Costumo prestar atenção em detalhes, prazos e etapas de execução."}, {"id": 36, "text": "Consigo estruturar tarefas, acompanhar processos e manter constância."}]}, {"id": "C", "title": "Bloco C — Personalidade / estilo de funcionamento", "description": "Aqui o foco é perceber como você tende a funcionar no dia a dia, não como gostaria de parecer.", "questions": [{"id": 37, "text": "Sou direto, objetivo e gosto de ver resultado concreto."}, {"id": 38, "text": "Tenho energia para agir e prefiro execução a excesso de discussão."}, {"id": 39, "text": "Tendo a funcionar melhor em situações concretas do que abstratas."}, {"id": 40, "text": "Sou curioso, observador e gosto de aprofundar assuntos."}, {"id": 41, "text": "Tendo a pensar bastante antes de concluir ou decidir."}, {"id": 42, "text": "Prefiro profundidade, lógica e consistência a respostas superficiais."}, {"id": 43, "text": "Sou criativo, imaginativo e valorizo autenticidade."}, {"id": 44, "text": "Não gosto de ambientes excessivamente engessados."}, {"id": 45, "text": "Tenho forte necessidade de expressão pessoal."}, {"id": 46, "text": "Sou empático, paciente e atento ao outro."}, {"id": 47, "text": "Valorizo relações humanas, cooperação e sentido social no trabalho."}, {"id": 48, "text": "Tenho tendência a me envolver com o bem-estar das pessoas."}, {"id": 49, "text": "Sou autoconfiante, proativo e orientado a resultados."}, {"id": 50, "text": "Gosto de autonomia, influência e poder de decisão."}, {"id": 51, "text": "Tendo a assumir a frente quando algo precisa acontecer."}, {"id": 52, "text": "Sou organizado, disciplinado e metódico."}, {"id": 53, "text": "Gosto de rotina, clareza de função e processo bem definido."}, {"id": 54, "text": "Tenho perfil cuidadoso, responsável e consistente."}]}, {"id": "D", "title": "Bloco D — Macroáreas de afinidade", "description": "Este bloco ajuda a mapear onde os perfis podem se expressar com mais força.", "questions": [{"id": 55, "text": "Tenho afinidade com raciocínio lógico, tecnologia, sistemas ou resolução técnica de problemas."}, {"id": 56, "text": "Sinto interesse por áreas ligadas a exatas, engenharia, computação ou análise estruturada."}, {"id": 57, "text": "Tenho interesse por corpo humano, saúde, natureza, cuidado clínico ou investigação biológica."}, {"id": 58, "text": "Me vejo em áreas ligadas à saúde, biologia, reabilitação ou promoção de bem-estar físico."}, {"id": 59, "text": "Tenho interesse por sociedade, comportamento, instituições, gestão, direito, economia ou relações humanas."}, {"id": 60, "text": "Me vejo atuando em áreas que lidem com pessoas, contextos sociais e tomada de decisão."}, {"id": 61, "text": "Tenho afinidade com escrita, fala, ensino, leitura, comunicação ou produção de conteúdo."}, {"id": 62, "text": "Me vejo em áreas que envolvam expressão verbal, educação ou comunicação."}, {"id": 63, "text": "Tenho interesse por estética, design, imagem, música, cena, criação visual ou produção artística."}, {"id": 64, "text": "Me vejo em atividades em que criatividade e expressão tenham peso importante."}]}, {"id": "E", "title": "Bloco E — Valores de carreira", "description": "Aqui aparece o filtro real da decisão. Muita gente gosta de uma área, mas escolhe por outros valores.", "questions": [{"id": 65, "text": "Para mim, uma boa profissão precisa trazer reconhecimento e sensação de realização."}, {"id": 66, "text": "Crescimento financeiro e status têm peso importante na minha escolha."}, {"id": 67, "text": "Estabilidade e segurança profissional são muito importantes para mim."}, {"id": 68, "text": "Qualidade de vida e equilíbrio pessoal pesam muito na minha decisão."}, {"id": 69, "text": "Preciso sentir que meu trabalho gera contribuição social real."}, {"id": 70, "text": "Prefiro uma carreira alinhada aos meus valores, mesmo que não seja a mais prestigiada."}, {"id": 71, "text": "Ter autonomia e possibilidade de crescimento é essencial para eu me sentir motivado."}, {"id": 72, "text": "Eu aceitaria ganhar menos se percebesse mais propósito no trabalho."}]}, {"id": "F", "title": "Bloco F — Maturidade da escolha", "description": "Aqui o foco é medir o quanto a escolha está clara, madura e menos refém de impulso ou pressão externa.", "questions": [{"id": 73, "text": "Hoje eu tenho clareza razoável sobre a área que quero seguir."}, {"id": 74, "text": "Estou dividido entre muitas opções e isso me atrapalha."}, {"id": 75, "text": "Já consigo justificar minha escolha com argumentos concretos."}, {"id": 76, "text": "Ainda preciso conhecer melhor profissões antes de decidir."}, {"id": 77, "text": "Minha escolha ainda oscila muito conforme a opinião de outras pessoas."}, {"id": 78, "text": "Consigo diferenciar o que eu acho interessante do que realmente combina comigo."}, {"id": 79, "text": "Tenho medo de escolher errado e isso trava minha decisão."}, {"id": 80, "text": "Sinto que estou amadurecendo minha escolha de forma mais realista."}]}], "interviewQuestions": [{"id": "q81", "title": "1. Conte sua história com a escolha profissional até aqui.", "placeholder": "Ex.: quando a dúvida começou, se já mudou de ideia muitas vezes, quais cursos ou profissões já considerou."}, {"id": "q82", "title": "2. Quais atividades fazem você perder a noção do tempo?", "placeholder": "Ex.: estudar, desenhar, liderar, conversar, organizar, pesquisar, vender, cuidar, construir."}, {"id": "q83", "title": "3. Em quais matérias, temas ou tipos de problema você costuma render melhor? Por quê?", "placeholder": "Fale do que aprende com mais facilidade e do que costuma ir bem."}, {"id": "q84", "title": "4. Quais atividades ou rotinas de trabalho você não suportaria no longo prazo?", "placeholder": "Ex.: rotina repetitiva, pressão comercial, excesso de contato social, ambiente hospitalar, trabalho manual, trabalho solitário."}, {"id": "q85", "title": "5. Cite três situações em que você se sentiu competente, útil ou elogiado.", "placeholder": "Pode ser na escola, trabalho, faculdade, projetos, família, igreja, esportes ou vida pessoal."}, {"id": "q86", "title": "6. Como você prefere trabalhar: sozinho, em dupla, em equipe, liderando ou com alta autonomia? Explique.", "placeholder": "Descreva o formato em que você costuma render melhor."}, {"id": "q87", "title": "7. O que pesa mais na sua escolha hoje: dinheiro, estabilidade, propósito, status, qualidade de vida, autonomia, ajudar pessoas ou outra coisa?", "placeholder": "Explique o que mais importa para você e por quê."}, {"id": "q88", "title": "8. Quais medos, travas ou dúvidas mais atrapalham sua decisão?", "placeholder": "Ex.: medo de escolher errado, decepcionar a família, não ganhar bem, não dar conta, saturação do mercado."}, {"id": "q89", "title": "9. O que sua família ou pessoas importantes esperam de você profissionalmente? E quanto isso influencia sua decisão?", "placeholder": "Descreva expectativas externas e o peso real delas."}, {"id": "q90", "title": "10. Quais profissões, áreas ou estilos de vida você admira? O que exatamente chama sua atenção neles?", "placeholder": "Não diga só o nome da profissão; diga o que te atrai nela."}, {"id": "q91", "title": "11. Quais condições reais precisam entrar na decisão?", "placeholder": "Ex.: tempo de formação, custo do curso, necessidade de renda rápida, cidade, mobilidade, concurso, home office, disponibilidade."}, {"id": "q92", "title": "12. Se você precisasse escolher hoje três áreas para explorar de forma séria nos próximos 30 dias, quais seriam e por quê?", "placeholder": "Liste as áreas e justifique brevemente cada uma."}], "profileMap": {"Prático": [1, 2, 3, 19, 20, 21, 37, 38, 39], "Investigador": [4, 5, 6, 22, 23, 24, 40, 41, 42], "Artista": [7, 8, 9, 25, 26, 27, 43, 44, 45], "Social": [10, 11, 12, 28, 29, 30, 46, 47, 48], "Empreendedor": [13, 14, 15, 31, 32, 33, 49, 50, 51], "Administrativo": [16, 17, 18, 34, 35, 36, 52, 53, 54]}, "macroMap": {"Exatas e Tecnologia": [55, 56], "Biológicas e Saúde": [57, 58], "Humanas e Sociais": [59, 60], "Linguagem, Comunicação e Ensino": [61, 62], "Artes e Criação": [63, 64]}, "valuesMap": {"Sucesso e realização": [65], "Ascensão e status": [66, 71], "Segurança e estabilidade": [67], "Qualidade de vida": [68], "Solidariedade e propósito": [69, 72], "Alinhamento pessoal": [70]}, "profileDefinitions": {"Prático": {"description": "perfil mais orientado à execução, concretude, ação e solução prática de problemas.", "strengths": ["ação", "execução", "objetividade", "solução prática", "agilidade operacional"], "environments": ["ambientes técnicos", "operações", "campo", "laboratório aplicado", "manutenção", "produção"], "careers": ["engenharias aplicadas", "tecnologia operacional", "mecânica", "automação", "logística técnica", "infraestrutura"]}, "Investigador": {"description": "perfil mais analítico, curioso, lógico e orientado à compreensão profunda.", "strengths": ["análise", "raciocínio", "profundidade", "curiosidade intelectual", "estudo"], "environments": ["pesquisa", "análise", "planejamento técnico", "ciência", "dados", "estratégia"], "careers": ["pesquisa", "ciência de dados", "psicologia com viés analítico", "medicina diagnóstica", "engenharia", "TI"]}, "Artista": {"description": "perfil mais criativo, expressivo, sensível e voltado à originalidade.", "strengths": ["criatividade", "expressão", "imaginação", "estética", "originalidade"], "environments": ["criação", "design", "comunicação", "produção artística", "branding", "conteúdo"], "careers": ["design", "publicidade", "audiovisual", "arquitetura", "produção cultural", "escrita criativa"]}, "Social": {"description": "perfil mais empático, relacional, cuidador e orientado a impacto humano.", "strengths": ["empatia", "escuta", "ensino", "acolhimento", "cooperação"], "environments": ["clínica", "educação", "RH", "projetos sociais", "saúde", "desenvolvimento humano"], "careers": ["psicologia", "pedagogia", "enfermagem", "terapias", "serviço social", "recursos humanos"]}, "Empreendedor": {"description": "perfil mais persuasivo, ativo, competitivo e orientado a metas e influência.", "strengths": ["liderança", "iniciativa", "negociação", "persuasão", "visão de crescimento"], "environments": ["negócios", "vendas", "gestão", "comercial", "projetos", "liderança"], "careers": ["administração", "marketing", "gestão comercial", "negócios", "direito estratégico", "empreendedorismo"]}, "Administrativo": {"description": "perfil mais organizado, estável, metódico e focado em estrutura e detalhe.", "strengths": ["organização", "método", "planejamento", "constância", "atenção a detalhes"], "environments": ["backoffice", "finanças", "processos", "controle", "gestão administrativa", "planejamento"], "careers": ["administração", "contabilidade", "finanças", "logística", "controladoria", "gestão de processos"]}}, "macroSuggestions": {"Exatas e Tecnologia": ["engenharias", "computação", "análise de dados", "sistemas", "tecnologia"], "Biológicas e Saúde": ["medicina", "psicologia", "enfermagem", "fisioterapia", "biologia", "nutrição"], "Humanas e Sociais": ["direito", "administração", "psicologia", "economia", "sociologia", "gestão pública"], "Linguagem, Comunicação e Ensino": ["jornalismo", "letras", "pedagogia", "marketing", "relações públicas", "docência"], "Artes e Criação": ["design", "arquitetura", "publicidade", "audiovisual", "moda", "artes visuais"]}, "maturityItems": [73, 74, 75, 76, 77, 78, 79, 80], "maturityInverted": [74, 76, 77, 79]};
-    const SCALE_LABELS = {0: 'Nada a ver', 1: 'Pouco', 2: 'Razoavelmente', 3: 'Bastante', 4: 'Muito'};
+    const DATA = {"sections": [{"id": "A", "title": "Bloco A — Interesses", "description": "Aqui a ideia é identificar aquilo que desperta curiosidade, prazer e vontade de fazer.", "questions": [{"id": 1, "text": "Gosto de atividades concretas, em que eu possa fazer, montar, ajustar ou consertar algo."}, {"id": 2, "text": "Tenho interesse por ferramentas, equipamentos, máquinas ou tecnologia aplicada."}, {"id": 3, "text": "Prefiro atividades práticas a atividades excessivamente teóricas."}, {"id": 4, "text": "Gosto de pesquisar, analisar e entender como as coisas funcionam."}, {"id": 5, "text": "Sinto prazer em resolver problemas complexos com lógica e raciocínio."}, {"id": 6, "text": "Tenho interesse por ciência, investigação, dados ou descoberta."}, {"id": 7, "text": "Gosto de criar, imaginar e expressar ideias de forma original."}, {"id": 8, "text": "Tenho interesse por arte, design, escrita, imagem, música ou produção criativa."}, {"id": 9, "text": "Sinto prazer em atividades em que posso inventar algo novo."}, {"id": 10, "text": "Gosto de ajudar pessoas, orientar, acolher ou ensinar."}, {"id": 11, "text": "Tenho interesse por atividades voltadas ao cuidado, educação ou apoio humano."}, {"id": 12, "text": "Sinto satisfação quando percebo que meu trabalho melhora a vida de alguém."}, {"id": 13, "text": "Gosto de liderar, influenciar, negociar ou mobilizar pessoas."}, {"id": 14, "text": "Tenho interesse por metas, resultados, crescimento e tomada de decisão."}, {"id": 15, "text": "Sinto prazer em desafios, competição saudável e ambientes dinâmicos."}, {"id": 16, "text": "Gosto de organizar tarefas, informações, rotinas e processos."}, {"id": 17, "text": "Tenho interesse por atividades com método, estrutura e acompanhamento de detalhes."}, {"id": 18, "text": "Prefiro ambientes previsíveis, bem definidos e organizados."}]}, {"id": "B", "title": "Bloco B — Competências percebidas", "description": "Aqui não é o que você gostaria de ser. É o que você percebe que já consegue fazer relativamente bem.", "questions": [{"id": 19, "text": "Aprendo com facilidade tarefas técnicas e operacionais."}, {"id": 20, "text": "Consigo lidar bem com objetos, ferramentas, equipamentos ou recursos tecnológicos."}, {"id": 21, "text": "Tenho facilidade para resolver problemas práticos do dia a dia."}, {"id": 22, "text": "Consigo analisar informações com profundidade antes de concluir algo."}, {"id": 23, "text": "Tenho facilidade para estudar sozinho e organizar meu raciocínio."}, {"id": 24, "text": "Costumo me sair bem em tarefas que exigem lógica, análise e interpretação."}, {"id": 25, "text": "Tenho facilidade para criar ideias originais ou soluções fora do óbvio."}, {"id": 26, "text": "Consigo me expressar bem por imagem, escrita, fala, estética ou composição."}, {"id": 27, "text": "Percebo detalhes de estilo, forma, linguagem ou sensibilidade que outras pessoas às vezes não notam."}, {"id": 28, "text": "As pessoas costumam me procurar para conversar, pedir ajuda ou orientação."}, {"id": 29, "text": "Tenho facilidade para explicar algo de forma clara e compreensível."}, {"id": 30, "text": "Costumo lidar bem com grupos, relações interpessoais e mediação de conflitos."}, {"id": 31, "text": "Consigo defender minhas ideias com segurança."}, {"id": 32, "text": "Tenho facilidade para tomar iniciativa e fazer as coisas acontecerem."}, {"id": 33, "text": "Consigo mobilizar pessoas em torno de metas, decisões ou projetos."}, {"id": 34, "text": "Tenho facilidade para manter organização mesmo com várias demandas."}, {"id": 35, "text": "Costumo prestar atenção em detalhes, prazos e etapas de execução."}, {"id": 36, "text": "Consigo estruturar tarefas, acompanhar processos e manter constância."}]}, {"id": "C", "title": "Bloco C — Personalidade / estilo de funcionamento", "description": "Aqui o foco é perceber como você tende a funcionar no dia a dia, não como gostaria de parecer.", "questions": [{"id": 37, "text": "Sou direto, objetivo e gosto de ver resultado concreto."}, {"id": 38, "text": "Tenho energia para agir e prefiro execução a excesso de discussão."}, {"id": 39, "text": "Tendo a funcionar melhor em situações concretas do que abstratas."}, {"id": 40, "text": "Sou curioso, observador e gosto de aprofundar assuntos."}, {"id": 41, "text": "Tendo a pensar bastante antes de concluir ou decidir."}, {"id": 42, "text": "Prefiro profundidade, lógica e consistência a respostas superficiais."}, {"id": 43, "text": "Sou criativo, imaginativo e valorizo autenticidade."}, {"id": 44, "text": "Não gosto de ambientes excessivamente engessados."}, {"id": 45, "text": "Tenho forte necessidade de expressão pessoal."}, {"id": 46, "text": "Sou empático, paciente e atento ao outro."}, {"id": 47, "text": "Valorizo relações humanas, cooperação e sentido social no trabalho."}, {"id": 48, "text": "Tenho tendência a me envolver com o bem-estar das pessoas."}, {"id": 49, "text": "Sou autoconfiante, proativo e orientado a resultados."}, {"id": 50, "text": "Gosto de autonomia, influência e poder de decisão."}, {"id": 51, "text": "Tendo a assumir a frente quando algo precisa acontecer."}, {"id": 52, "text": "Sou organizado, disciplinado e metódico."}, {"id": 53, "text": "Gosto de rotina, clareza de função e processo bem definido."}, {"id": 54, "text": "Tenho perfil cuidadoso, responsável e consistente."}]}, {"id": "D", "title": "Bloco D — Macroáreas de afinidade", "description": "Este bloco ajuda a mapear onde os perfis podem se expressar com mais força.", "questions": [{"id": 55, "text": "Tenho afinidade com raciocínio lógico, tecnologia, sistemas ou resolução técnica de problemas."}, {"id": 56, "text": "Sinto interesse por áreas ligadas a exatas, engenharia, computação ou análise estruturada."}, {"id": 57, "text": "Tenho interesse por corpo humano, saúde, natureza, cuidado clínico ou investigação biológica."}, {"id": 58, "text": "Me vejo em áreas ligadas à saúde, biologia, reabilitação ou promoção de bem-estar físico."}, {"id": 59, "text": "Tenho interesse por sociedade, comportamento, instituições, gestão, direito, economia ou relações humanas."}, {"id": 60, "text": "Me vejo atuando em áreas que lidem com pessoas, contextos sociais e tomada de decisão."}, {"id": 61, "text": "Tenho afinidade com escrita, fala, ensino, leitura, comunicação ou produção de conteúdo."}, {"id": 62, "text": "Me vejo em áreas que envolvam expressão verbal, educação ou comunicação."}, {"id": 63, "text": "Tenho interesse por estética, design, imagem, música, cena, criação visual ou produção artística."}, {"id": 64, "text": "Me vejo em atividades em que criatividade e expressão tenham peso importante."}]}, {"id": "E", "title": "Bloco E — Valores de carreira", "description": "Aqui aparece o filtro real da decisão. Muita gente gosta de uma área, mas escolhe por outros valores.", "questions": [{"id": 65, "text": "Para mim, uma boa profissão precisa trazer reconhecimento e sensação de realização."}, {"id": 66, "text": "Crescimento financeiro e status têm peso importante na minha escolha."}, {"id": 67, "text": "Estabilidade e segurança profissional são muito importantes para mim."}, {"id": 68, "text": "Qualidade de vida e equilíbrio pessoal pesam muito na minha decisão."}, {"id": 69, "text": "Preciso sentir que meu trabalho gera contribuição social real."}, {"id": 70, "text": "Prefiro uma carreira alinhada aos meus valores, mesmo que não seja a mais prestigiada."}, {"id": 71, "text": "Ter autonomia e possibilidade de crescimento é essencial para eu me sentir motivado."}, {"id": 72, "text": "Eu aceitaria ganhar menos se percebesse mais propósito no trabalho."}]}, {"id": "F", "title": "Bloco F — Maturidade da escolha", "description": "Aqui o foco é medir o quanto a escolha está clara, madura e menos refém de impulso ou pressão externa.", "questions": [{"id": 73, "text": "Hoje eu tenho clareza razoável sobre a área que quero seguir."}, {"id": 74, "text": "Estou dividido entre muitas opções e isso me atrapalha."}, {"id": 75, "text": "Já consigo justificar minha escolha com argumentos concretos."}, {"id": 76, "text": "Ainda preciso conhecer melhor profissões antes de decidir."}, {"id": 77, "text": "Minha escolha ainda oscila muito conforme a opinião de outras pessoas."}, {"id": 78, "text": "Consigo diferenciar o que eu acho interessante do que realmente combina comigo."}, {"id": 79, "text": "Tenho medo de escolher errado e isso trava minha decisão."}, {"id": 80, "text": "Sinto que estou amadurecendo minha escolha de forma mais realista."}]}], "interviewQuestions": [{"id": "q81", "title": "Conte sua história com a escolha profissional até aqui.", "placeholder": "Ex.: quando a dúvida começou, se já mudou de ideia muitas vezes, quais cursos ou profissões já considerou."}, {"id": "q82", "title": "Quais atividades fazem você perder a noção do tempo?", "placeholder": "Ex.: estudar, desenhar, liderar, conversar, organizar, pesquisar, vender, cuidar, construir."}, {"id": "q83", "title": "Em quais matérias, temas ou tipos de problema você costuma render melhor? Por quê?", "placeholder": "Fale do que aprende com mais facilidade e do que costuma ir bem."}, {"id": "q84", "title": "Quais atividades ou rotinas de trabalho você não suportaria no longo prazo?", "placeholder": "Ex.: rotina repetitiva, pressão comercial, excesso de contato social, ambiente hospitalar, trabalho manual, trabalho solitário."}, {"id": "q85", "title": "Cite três situações em que você se sentiu competente, útil ou elogiado.", "placeholder": "Pode ser na escola, trabalho, faculdade, projetos, família, igreja, esportes ou vida pessoal."}, {"id": "q86", "title": "Como você prefere trabalhar: sozinho, em dupla, em equipe, liderando ou com alta autonomia? Explique.", "placeholder": "Descreva o formato em que você costuma render melhor."}, {"id": "q87", "title": "O que pesa mais na sua escolha hoje: dinheiro, estabilidade, propósito, status, qualidade de vida, autonomia, ajudar pessoas ou outra coisa?", "placeholder": "Explique o que mais importa para você e por quê."}, {"id": "q88", "title": "Quais medos, travas ou dúvidas mais atrapalham sua decisão?", "placeholder": "Ex.: medo de escolher errado, decepcionar a família, não ganhar bem, não dar conta, saturação do mercado."}, {"id": "q89", "title": "O que sua família ou pessoas importantes esperam de você profissionalmente? E quanto isso influencia sua decisão?", "placeholder": "Descreva expectativas externas e o peso real delas."}, {"id": "q90", "title": "Quais profissões, áreas ou estilos de vida você admira? O que exatamente chama sua atenção neles?", "placeholder": "Não diga só o nome da profissão; diga o que te atrai nela."}, {"id": "q91", "title": "Quais condições reais precisam entrar na decisão?", "placeholder": "Ex.: tempo de formação, custo do curso, necessidade de renda rápida, cidade, mobilidade, concurso, home office, disponibilidade."}, {"id": "q92", "title": "Se você precisasse escolher hoje três áreas para explorar de forma séria nos próximos 30 dias, quais seriam e por quê?", "placeholder": "Liste as áreas e justifique brevemente cada uma."}], "profileMap": {"Prático": [1, 2, 3, 19, 20, 21, 37, 38, 39], "Investigador": [4, 5, 6, 22, 23, 24, 40, 41, 42], "Artista": [7, 8, 9, 25, 26, 27, 43, 44, 45], "Social": [10, 11, 12, 28, 29, 30, 46, 47, 48], "Empreendedor": [13, 14, 15, 31, 32, 33, 49, 50, 51], "Administrativo": [16, 17, 18, 34, 35, 36, 52, 53, 54]}, "macroMap": {"Exatas e Tecnologia": [55, 56], "Biológicas e Saúde": [57, 58], "Humanas e Sociais": [59, 60], "Linguagem, Comunicação e Ensino": [61, 62], "Artes e Criação": [63, 64]}, "valuesMap": {"Sucesso e realização": [65], "Ascensão e status": [66, 71], "Segurança e estabilidade": [67], "Qualidade de vida": [68], "Solidariedade e propósito": [69, 72], "Alinhamento pessoal": [70]}, "profileDefinitions": {"Prático": {"description": "perfil mais orientado à execução, concretude, ação e solução prática de problemas.", "strengths": ["ação", "execução", "objetividade", "solução prática", "agilidade operacional"], "environments": ["ambientes técnicos", "operações", "campo", "laboratório aplicado", "manutenção", "produção"], "careers": ["engenharias aplicadas", "tecnologia operacional", "mecânica", "automação", "logística técnica", "infraestrutura"]}, "Investigador": {"description": "perfil mais analítico, curioso, lógico e orientado à compreensão profunda.", "strengths": ["análise", "raciocínio", "profundidade", "curiosidade intelectual", "estudo"], "environments": ["pesquisa", "análise", "planejamento técnico", "ciência", "dados", "estratégia"], "careers": ["pesquisa", "ciência de dados", "psicologia com viés analítico", "medicina diagnóstica", "engenharia", "TI"]}, "Artista": {"description": "perfil mais criativo, expressivo, sensível e voltado à originalidade.", "strengths": ["criatividade", "expressão", "imaginação", "estética", "originalidade"], "environments": ["criação", "design", "comunicação", "produção artística", "branding", "conteúdo"], "careers": ["design", "publicidade", "audiovisual", "arquitetura", "produção cultural", "escrita criativa"]}, "Social": {"description": "perfil mais empático, relacional, cuidador e orientado a impacto humano.", "strengths": ["empatia", "escuta", "ensino", "acolhimento", "cooperação"], "environments": ["clínica", "educação", "RH", "projetos sociais", "saúde", "desenvolvimento humano"], "careers": ["psicologia", "pedagogia", "enfermagem", "terapias", "serviço social", "recursos humanos"]}, "Empreendedor": {"description": "perfil mais persuasivo, ativo, competitivo e orientado a metas e influência.", "strengths": ["liderança", "iniciativa", "negociação", "persuasão", "visão de crescimento"], "environments": ["negócios", "vendas", "gestão", "comercial", "projetos", "liderança"], "careers": ["administração", "marketing", "gestão comercial", "negócios", "direito estratégico", "empreendedorismo"]}, "Administrativo": {"description": "perfil mais organizado, estável, metódico e focado em estrutura e detalhe.", "strengths": ["organização", "método", "planejamento", "constância", "atenção a detalhes"], "environments": ["backoffice", "finanças", "processos", "controle", "gestão administrativa", "planejamento"], "careers": ["administração", "contabilidade", "finanças", "logística", "controladoria", "gestão de processos"]}}, "macroSuggestions": {"Exatas e Tecnologia": ["engenharias", "computação", "análise de dados", "sistemas", "tecnologia"], "Biológicas e Saúde": ["medicina", "psicologia", "enfermagem", "fisioterapia", "biologia", "nutrição"], "Humanas e Sociais": ["direito", "administração", "psicologia", "economia", "sociologia", "gestão pública"], "Linguagem, Comunicação e Ensino": ["jornalismo", "letras", "pedagogia", "marketing", "relações públicas", "docência"], "Artes e Criação": ["design", "arquitetura", "publicidade", "audiovisual", "moda", "artes visuais"]}, "maturityItems": [73, 74, 75, 76, 77, 78, 79, 80], "maturityInverted": [74, 76, 77, 79]};
+    const SCALE_LABELS = {0: 'Nada a ver comigo', 1: 'Pouco a ver comigo', 2: 'Razoavelmente a ver comigo', 3: 'Bastante a ver comigo', 4: 'Muito a ver comigo'};
     const answers = {};
     const interviewAnswers = {};
     let latestComputed = null;
@@ -728,13 +701,17 @@
     function createScaleLegend() {
       return `
         <div class="legend">
-          <span>0 = Nada a ver</span>
-          <span>1 = Pouco</span>
-          <span>2 = Razoavelmente</span>
-          <span>3 = Bastante</span>
-          <span>4 = Muito</span>
+          <span>Nada a ver comigo</span>
+          <span>Pouco a ver comigo</span>
+          <span>Razoavelmente a ver comigo</span>
+          <span>Bastante a ver comigo</span>
+          <span>Muito a ver comigo</span>
         </div>
       `;
+    }
+
+    function cleanSectionTitle(title) {
+      return String(title || '').replace(/^Bloco\s+[A-Z]\s+—\s+/, '').trim();
     }
 
     function renderSections() {
@@ -744,7 +721,7 @@
         const card = document.createElement('section');
         card.className = 'card section-card';
         card.innerHTML = `
-          <h2>${section.title}</h2>
+          <h2>${cleanSectionTitle(section.title)}</h2>
           <p class="section-desc">${section.description}</p>
           ${createScaleLegend()}
         `;
@@ -758,7 +735,7 @@
           const optionsHtml = [0,1,2,3,4].map(value => `
             <div class="option">
               <input type="radio" name="q_${question.id}" id="q_${question.id}_${value}" value="${value}">
-              <label for="q_${question.id}_${value}" title="${SCALE_LABELS[value]}">${value}</label>
+              <label for="q_${question.id}_${value}" title="${SCALE_LABELS[value]}">${SCALE_LABELS[value]}</label>
             </div>
           `).join('');
 
@@ -787,7 +764,7 @@
       const interviewCard = document.createElement('section');
       interviewCard.className = 'card section-card';
       interviewCard.innerHTML = `
-        <h2>Bloco G — Entrevista vocacional aprofundada</h2>
+        <h2>Entrevista vocacional aprofundada</h2>
         <p class="section-desc">Essas perguntas abertas funcionam como uma mini entrevista profissional. Aqui saem os detalhes que um formulário fechado nunca alcança sozinho.</p>
       `;
 
@@ -1164,13 +1141,12 @@ Observação
 
 
     function getApiBaseUrl() {
-      const manual = document.getElementById('backendUrl').value.trim();
-      if (manual) return manual.replace(/\/$/, '');
       return window.location.origin.replace(/\/$/, '');
     }
 
     function setServerStatus(message, type = 'neutral') {
       const box = document.getElementById('serverStatus');
+      if (!box) return;
       box.textContent = message;
       box.className = 'status-box';
       if (type === 'ok') box.classList.add('ok');
@@ -1350,7 +1326,7 @@ Observação
         idade: document.getElementById('idade').value,
         answers,
         interviewAnswers,
-        backendUrl: document.getElementById('backendUrl').value
+        backendUrl: null
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
       alert('Respostas salvas no navegador.');
@@ -1366,7 +1342,7 @@ Observação
         const data = JSON.parse(raw);
         document.getElementById('nome').value = data.nome || '';
         document.getElementById('idade').value = data.idade || '';
-        document.getElementById('backendUrl').value = data.backendUrl || '';
+        
 
         Object.keys(data.answers || {}).forEach(key => {
           answers[key] = data.answers[key];
@@ -1396,7 +1372,7 @@ Observação
 
       document.getElementById('nome').value = '';
       document.getElementById('idade').value = '';
-      document.getElementById('backendUrl').value = '';
+      
 
       Object.keys(answers).forEach(key => delete answers[key]);
       Object.keys(interviewAnswers).forEach(key => delete interviewAnswers[key]);
@@ -1453,21 +1429,8 @@ Observação
       a.click();
       URL.revokeObjectURL(url);
     }
-
-    document.getElementById('btnIniciar').addEventListener('click', () => {
-      const first = document.querySelector('.section-card');
-      if (first) first.scrollIntoView({ behavior: 'smooth' });
-    });
-    document.getElementById('btnSalvar').addEventListener('click', saveData);
-    document.getElementById('btnCarregar').addEventListener('click', loadData);
-    document.getElementById('btnLimpar').addEventListener('click', clearAll);
-    document.getElementById('btnCalcular').addEventListener('click', calculateResults);
-    document.getElementById('btnCopiar').addEventListener('click', copyResult);
-    document.getElementById('btnBaixarJson').addEventListener('click', downloadJson);
     document.getElementById('btnGerarAnaliseIa').addEventListener('click', gerarAnaliseIa);
     document.getElementById('btnGerarPdfIa').addEventListener('click', gerarPdfIa);
-    document.getElementById('btnGerarPdfServidorTopo').addEventListener('click', gerarPdfIa);
-    document.getElementById('btnCopiarIa').addEventListener('click', copyAiResult);
 
     renderSections();
     updateProgress();
