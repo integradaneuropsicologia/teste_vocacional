@@ -793,7 +793,7 @@
           </div>
           <textarea id="${item.id}" placeholder="${item.placeholder}" minlength="12"></textarea>
           <div class="textarea-meta">
-            <span>Seja específico. Respostas vagas geram leitura fraca.</span>
+            <span>Seja específico e detalhista. Respostas vagas geram resultados inconclusivos.</span>
             <span id="${item.id}_count">0 caracteres</span>
           </div>
         `;
@@ -921,7 +921,7 @@
       return { missingClosed, missingOpen };
     }
 
-    function calculateResults() {
+    function calculateResults(options = {}) {
       const validation = validateBeforeCalculate();
       if (validation.missingClosed.length || validation.missingOpen.length) {
         const parts = [];
@@ -1146,8 +1146,10 @@ Observação
       };
 
       document.getElementById('textoResultado').value = textOutput;
-      resultsSection.classList.remove('hidden');
-      resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      if (!options.silent) {
+        resultsSection.classList.remove('hidden');
+        resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
 
 
@@ -1212,7 +1214,7 @@ Observação
 
     function formatAnalysisText(analise) {
       return [
-        'ANÁLISE VOCACIONAL GERADA NO BACKEND',
+        'ANÁLISE VOCACIONAL',
         '',
         '1. Resumo geral',
         analise.resumo_geral,
@@ -1268,7 +1270,9 @@ Observação
     }
 
     async function gerarAnaliseIa() {
-      if (!ensureCalculated()) return;
+      calculateResults({ silent: true });
+      if (!latestComputed) return;
+      resultsSection.classList.add('hidden');
       const payload = buildBackendPayload();
       if (!payload) {
         alert('Não foi possível montar o payload para o backend.');
@@ -1304,6 +1308,7 @@ Observação
 
         latestAnaliseIa = data.analise;
         const text = formatAnalysisText(data.analise);
+        resultsSection.classList.remove('hidden');
         document.getElementById('textoAnaliseIa').value = text;
         document.getElementById('aiAnalysisBlock').classList.remove('hidden');
         document.getElementById('initialActions').classList.add('hidden');
@@ -1363,15 +1368,15 @@ Observação
         setServerStatus('PDF gerado e baixado com sucesso.', 'ok');
       } catch (error) {
         console.error(error);
-        setServerStatus(`Erro ao gerar o PDF no backend: ${error.message}`, 'error');
-        alert('Não foi possível gerar o PDF no backend.');
+        setServerStatus(`Erro ao gerar o PDF: ${error.message}`, 'error');
+        alert('Não foi possível gerar o PDF.');
       }
     }
 
     function copyAiResult() {
       const text = document.getElementById('textoAnaliseIa').value;
       if (!text) {
-        alert('Gere a análise no backend antes de copiar.');
+        alert('Gere a análise antes de copiar.');
         return;
       }
       navigator.clipboard.writeText(text).then(() => alert('Análise IA copiada.'))
