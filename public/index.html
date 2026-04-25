@@ -169,6 +169,12 @@
 
     button:hover { transform: translateY(-1px); }
 
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.7;
+      transform: none;
+    }
+
     .btn-primary {
       background: var(--primary);
       color: #fff;
@@ -569,10 +575,10 @@
 
     <main id="formSections"></main>
 
-    <div class="footer-actions">
+    <div class="footer-actions" id="initialActions">
       <button class="btn-primary" id="btnGerarAnaliseIa">Gerar análise vocacional</button>
-      <button class="btn-ghost" id="btnGerarPdfIa">Baixar PDF</button>
     </div>
+    <div id="serverStatus" class="status-box hidden">Backend ainda não acionado.</div>
 
    
     <section class="results card hidden" id="resultsSection">
@@ -681,6 +687,11 @@
           <textarea id="textoAnaliseIa" class="text-output" readonly></textarea>
           <p class="helper">Esta é a devolutiva estruturada retornada pela rota <code>/api/analise-vocacional</code>.</p>
         </div>
+
+        <div class="footer-actions hidden" id="finalActions">
+          <button class="btn-primary" id="btnGerarPdfIa" type="button">Gerar PDF</button>
+          <button class="btn-secondary" id="btnRefazerTeste" type="button">Refazer teste</button>
+        </div>
       </div>
     </section>
   </div>
@@ -691,6 +702,7 @@
     const answers = {};
     const interviewAnswers = {};
     let latestComputed = null;
+    let latestAnaliseIa = null;
     const STORAGE_KEY = 'orientacao_vocacional_entrevista_v2';
 
     const formSections = document.getElementById('formSections');
@@ -1149,6 +1161,7 @@ Observação
       if (!box) return;
       box.textContent = message;
       box.className = 'status-box';
+      box.classList.remove('hidden');
       if (type === 'ok') box.classList.add('ok');
       if (type === 'warn') box.classList.add('warn');
       if (type === 'error') box.classList.add('error');
@@ -1168,8 +1181,33 @@ Observação
         respostas: respostasFechadas,
         escores: latestComputed,
         entrevista: { ...interviewAnswers },
-        resultado_local_texto: document.getElementById('textoResultado').value || null
+        resultado_local_texto: document.getElementById('textoResultado').value || null,
+        analise_ia: latestAnaliseIa
       };
+    }
+
+    function formatIndicacoesParaVoce(indicacoes) {
+      if (!Array.isArray(indicacoes) || !indicacoes.length) return ['Nenhuma indicação personalizada foi gerada.'];
+
+      const linhas = [];
+      indicacoes.forEach((item, index) => {
+        linhas.push(`${index + 1}. ${item.profissao || 'Profissão indicada'}`);
+        linhas.push(`- Por que combina: ${item.justificativa || ''}`);
+        linhas.push(`- Rotina: ${item.rotina || ''}`);
+        linhas.push(`- Formação: ${item.formacao || ''}`);
+        linhas.push(`- Mercado: ${item.mercado || ''}`);
+        linhas.push(`- Remuneração: ${item.remuneracao || ''}`);
+        linhas.push(`- Tempo de retorno: ${item.tempo_retorno || ''}`);
+        linhas.push(`- Dia a dia: ${item.dia_a_dia || ''}`);
+        linhas.push('- Afirmações comuns de profissionais da área:');
+        (item.afirmacoes_profissionais || []).forEach(frase => linhas.push(`  • ${frase}`));
+        linhas.push('- Como testar essa hipótese antes de escolher:');
+        (item.como_testar_hipotese || []).forEach(teste => linhas.push(`  • ${teste}`));
+        linhas.push('- Pontos principais para considerar na decisão:');
+        (item.pontos_para_considerar || []).forEach(ponto => linhas.push(`  • ${ponto}`));
+        linhas.push('');
+      });
+      return linhas;
     }
 
     function formatAnalysisText(analise) {
@@ -1216,7 +1254,10 @@ Observação
         '13. Próximos passos',
         ...(analise.proximos_passos || []).map(item => `- ${item}`),
         '',
-        '14. Aviso final',
+        '14. Indicações para você',
+        ...formatIndicacoesParaVoce(analise.indicacoes_para_voce),
+        '',
+        '15. Aviso final',
         analise.aviso_final
       ].join('\n');
     }
@@ -1234,8 +1275,15 @@ Observação
         return;
       }
 
+      const btnAnalise = document.getElementById('btnGerarAnaliseIa');
       const baseUrl = getApiBaseUrl();
-      setServerStatus('Enviando respostas para o backend e aguardando a análise...', 'warn');
+      latestAnaliseIa = null;
+      document.getElementById('finalActions').classList.add('hidden');
+      document.getElementById('aiAnalysisBlock').classList.add('hidden');
+      document.getElementById('textoAnaliseIa').value = '';
+      btnAnalise.disabled = true;
+      btnAnalise.textContent = 'Aguarde o resultado...';
+      setServerStatus('Aguarde o resultado...', 'warn');
 
       try {
         const response = await fetch(`${baseUrl}/api/analise-vocacional`, {
@@ -1244,28 +1292,38 @@ Observação
           body: JSON.stringify(payload)
         });
 
+        const data = await response.json().catch(() => null);
+
         if (!response.ok) {
-          throw new Error(`Falha HTTP ${response.status}`);
+          throw new Error(data?.error || `Falha HTTP ${response.status}`);
         }
 
-        const data = await response.json();
-        if (!data.ok || !data.analise) {
-          throw new Error(data.error || 'Resposta inválida do backend.');
+        if (!data?.ok || !data.analise) {
+          throw new Error(data?.error || 'Resposta inválida do backend.');
         }
 
+        latestAnaliseIa = data.analise;
         const text = formatAnalysisText(data.analise);
         document.getElementById('textoAnaliseIa').value = text;
         document.getElementById('aiAnalysisBlock').classList.remove('hidden');
-        setServerStatus('Análise do backend recebida com sucesso.', 'ok');
+        document.getElementById('initialActions').classList.add('hidden');
+        document.getElementById('finalActions').classList.remove('hidden');
+        setServerStatus('Análise gerada com sucesso.', 'ok');
         document.getElementById('aiAnalysisBlock').scrollIntoView({ behavior: 'smooth', block: 'start' });
       } catch (error) {
         console.error(error);
+        btnAnalise.disabled = false;
+        btnAnalise.textContent = 'Gerar análise vocacional';
         setServerStatus(`Erro ao gerar análise no backend: ${error.message}`, 'error');
         alert('Não foi possível gerar a análise no backend. Verifique a URL do servidor e se a API está rodando.');
       }
     }
 
     async function gerarPdfIa() {
+      if (!latestAnaliseIa) {
+        alert('Gere a análise antes de baixar o PDF.');
+        return;
+      }
       if (!ensureCalculated()) return;
       const payload = buildBackendPayload();
       if (!payload) {
@@ -1274,7 +1332,7 @@ Observação
       }
 
       const baseUrl = getApiBaseUrl();
-      setServerStatus('Gerando PDF no servidor. Isso pode levar alguns segundos...', 'warn');
+      setServerStatus('Gerando PDF no servidor...', 'warn');
 
       try {
         const response = await fetch(`${baseUrl}/api/relatorio-vocacional`, {
@@ -1389,8 +1447,41 @@ Observação
       document.getElementById('aiAnalysisBlock').classList.add('hidden');
       document.getElementById('textoAnaliseIa').value = '';
       latestComputed = null;
-      setServerStatus('Backend ainda não acionado.');
+      latestAnaliseIa = null;
+      document.getElementById('initialActions').classList.remove('hidden');
+      document.getElementById('btnGerarAnaliseIa').disabled = false;
+      document.getElementById('btnGerarAnaliseIa').textContent = 'Gerar análise vocacional';
+      document.getElementById('finalActions').classList.add('hidden');
+      const statusBox = document.getElementById('serverStatus');
+      if (statusBox) statusBox.classList.add('hidden');
       updateProgress();
+    }
+
+    function refazerTeste() {
+      document.getElementById('nome').value = '';
+      document.getElementById('idade').value = '';
+      Object.keys(answers).forEach(key => delete answers[key]);
+      Object.keys(interviewAnswers).forEach(key => delete interviewAnswers[key]);
+      document.querySelectorAll('input[type="radio"]').forEach(input => input.checked = false);
+      DATA.interviewQuestions.forEach(item => {
+        const textarea = document.getElementById(item.id);
+        if (textarea) textarea.value = '';
+        const counter = document.getElementById(`${item.id}_count`);
+        if (counter) counter.textContent = '0 caracteres';
+      });
+      resultsSection.classList.add('hidden');
+      document.getElementById('aiAnalysisBlock').classList.add('hidden');
+      document.getElementById('textoAnaliseIa').value = '';
+      latestComputed = null;
+      latestAnaliseIa = null;
+      document.getElementById('initialActions').classList.remove('hidden');
+      document.getElementById('btnGerarAnaliseIa').disabled = false;
+      document.getElementById('btnGerarAnaliseIa').textContent = 'Gerar análise vocacional';
+      document.getElementById('finalActions').classList.add('hidden');
+      const statusBox = document.getElementById('serverStatus');
+      if (statusBox) statusBox.classList.add('hidden');
+      updateProgress();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function copyResult() {
@@ -1431,6 +1522,7 @@ Observação
     }
     document.getElementById('btnGerarAnaliseIa').addEventListener('click', gerarAnaliseIa);
     document.getElementById('btnGerarPdfIa').addEventListener('click', gerarPdfIa);
+    document.getElementById('btnRefazerTeste').addEventListener('click', refazerTeste);
 
     renderSections();
     updateProgress();
